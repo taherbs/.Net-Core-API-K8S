@@ -1,0 +1,47 @@
+apiVersion: apps/v1  # Specifies the Kubernetes API version to use
+kind: Deployment  # Specifies the kind of Kubernetes object to create
+metadata:
+  name: weather-api-deployment  # Name of the Deployment
+  labels:
+    app: weather-api  # Label indicating that this Deployment is part of the weather-api application
+  annotations:
+    description: "Deployment for the weather-api application"  # Description of the Deployment
+    author: "thouraBS"  # Author of the Deployment
+spec:
+  replicas: 3  # Number of replicas (Pods) to create
+  selector:
+    matchLabels:
+      app: weather-api  # The Deployment manages Pods that have the label "app: weather-api"
+  template:
+    metadata:
+      labels:
+        app: weather-api  # Label indicating that these Pods are part of the weather-api application
+      annotations:
+        description: "Pod for the weather-api application"  # Description of the Pods
+        author: "thouraBS"  # Author of the Pods
+    spec:
+      containers:
+      - name: weather-api  # Name of the container
+        image: weather-api:latest  # Image for the container
+        imagePullPolicy: IfNotPresent  # Policy for pulling the image
+        ports:
+        - containerPort: 8080  # Port that the container listens on
+        env:
+        - name: ASPNETCORE_URLS  # ASPNETCORE_URLS environment variable
+          value: "http://*:8080"  # Specifies the URLs that the app listens on
+---
+apiVersion: v1  # Specifies the Kubernetes API version to use
+kind: Service  # Specifies the kind of Kubernetes object to create
+metadata:
+  name: weather-api-lb  # Name of the Service
+  annotations:
+    description: "Service for the weather-api application"  # Description of the Service
+    author: "thouraBS"  # Author of the Service
+spec:
+  selector:
+    app: weather-api  # The Service routes traffic to Pods that have the label "app: weather-api"
+  ports:
+    - protocol: TCP  # Protocol for the port
+      port: 8080  # Port that the Service listens on
+      targetPort: 8080  # Port on the Pods that the Service routes traffic to
+  type: ClusterIP  # ClusterIP type service  provides internal network connectivity within your cluster - no outside access

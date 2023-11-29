@@ -1,0 +1,52 @@
+apiVersion: v1 
+kind: ConfigMap  # Specifies the kind of Kubernetes object to create
+metadata:
+  name: nginx-conf  # Name of the ConfigMap
+data:
+  default.conf: |  # Nginx configuration
+    server {
+      listen 80;  # Nginx listens on port 80
+      location / {
+        proxy_pass http://weather-api-lb:8080;  # Nginx forwards requests to the weather-api-lb service on port 8080
+      }
+    }
+---
+apiVersion: apps/v1 
+kind: Deployment  # Specifies the kind of Kubernetes object to create
+metadata:
+  name: nginx-deployment  # Name of the Deployment
+spec:
+  replicas: 1  # Number of replicas (Pods) to create
+  selector:
+    matchLabels:
+      app: nginx  # The Deployment manages Pods that have the label "app: nginx"
+  template:
+    metadata:
+      labels:
+        app: nginx  # Label indicating that these Pods are part of the nginx application
+    spec:
+      containers:
+      - name: nginx  # Name of the container
+        image: nginx:1.19.10  # Image for the container
+        ports:
+        - containerPort: 80  # Port that the container listens on
+        volumeMounts:
+        - name: config-volume  # Name of the volume to mount
+          mountPath: /etc/nginx/conf.d  # Path in the container where the volume is mounted
+      volumes:
+      - name: config-volume  # Name of the volume
+        configMap:
+          name: nginx-conf  # ConfigMap that should be mounted as a volume
+---
+apiVersion: v1 
+kind: Service  # Specifies the kind of Kubernetes object to create
+metadata:
+  name: nginx-service  # Name of the Service
+spec:
+  selector:
+    app: nginx  # The Service routes traffic to Pods that have the label "app: nginx"
+  ports:
+    - protocol: TCP  # Protocol for the port
+      port: 80  # Port that the Service listens on
+      targetPort: 80  # Port on the Pods that the Service routes traffic to
+  type: LoadBalancer  # Type of the Service
